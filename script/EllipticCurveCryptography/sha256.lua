@@ -125,6 +125,9 @@ local function preprocess(data)
 	local blocks = math.ceil(data_len / 64)
 
 	local proc = {}
+	-- fix the proc is proc = Zero
+	-- if proc == Zero then proc[i] is int
+	-- so it will be a bug
 	for i = 1, blocks do
 		local block = Zero
 		proc[i] = block

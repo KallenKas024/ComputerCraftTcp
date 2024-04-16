@@ -1,6 +1,4 @@
 local tcp = require("tcp")
-while true do
-    tcp.ReceiveTcpData(10, function (sender, msg)
-        print(msg)
-    end)
-end
+tcp.Establish(0).BuildClient().ReceiveTcpData(function (sender, msg)
+    print(msg)
+end)

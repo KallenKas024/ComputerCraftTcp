@@ -339,7 +339,7 @@ local function square(a)
 end
 
 local function encodeInt(a)
-	local enc = Zero
+	local enc = {0, 0, 0, 0, 0, 0, 0}
 
 	for i = 1, 7 do
 		local word = a[i]

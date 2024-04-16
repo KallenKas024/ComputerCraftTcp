@@ -52,6 +52,18 @@ local function decrypt(data, key)
 	return setmetatable(result, util.byteTableMT)
 end
 
+local function toHex(tb_arr)
+	local pool = "0123456789ABCDEF"
+	local res = ""
+	local hexStr = ""
+	for byte in tb_arr do
+		hexStr = string.sub(pool, (byte & 0xF0) >> 4, (byte & 0xF0) >> 4)
+		hexStr = hexStr .. string.sub(pool, (byte & 0x0F), (byte & 0x0F))
+		res = res .. hexStr
+	end
+	return res
+end
+
 local function keypair(seed)
 	local x
 	if seed then
@@ -65,7 +77,11 @@ local function keypair(seed)
 	local privateKey = x:encode()
 	local publicKey = Y:encode()
 
-	return privateKey, publicKey
+
+	return {
+		toHex(privateKey),
+		toHex(publicKey)
+	}
 end
 
 local function exchange(privateKey, publicKey)

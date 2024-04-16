@@ -2,7 +2,7 @@ local util = {}
 
 util.byteTableMT = {
 	__tostring = function(a)
-		return string.char(table.unpack(a))
+		return tostring(table.unpack(a))
 	end,
 
 	__index = {
@@ -25,9 +25,11 @@ util.byteTableMT = {
 			end
 
 			return ret == 0
-		end,
-	},
+		end
+	}
 }
+
+-- util.byteTableMT.__index = util.byteTableMT
 
 function util.stringToByteArray(str)
 	if type(str) ~= "string" then

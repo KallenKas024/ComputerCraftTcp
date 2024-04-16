@@ -9,7 +9,12 @@ tcp.finalKey = ""
 tcp.clientID = clientID
 function kp()
 	local ecdh = require("script.EllipticCurveCryptography.init")
-	tcp.pri, tcp.pub = ecdh.keypair(os.time())
+	local rand = require("script.EllipticCurveCryptography.random")
+	local tmp = ecdh.keypair(rand.random())
+	tcp.pri = tmp[1]
+	tcp.pub = tmp[2]
+	print("PRI -> " .. tcp.pri)
+	print("PUB -> " .. tcp.pub)
 end
 
 kp()
@@ -21,10 +26,6 @@ function split(str, dl)
 		table.insert(result, part)
 	end
 end
-
-
-
-
 
 tcp.BuildServer = function ()
 	local box = peripheral.find("chatBox")
@@ -38,8 +39,10 @@ tcp.BuildServer = function ()
 					local sender = tb_msg[0]
 					if sender == clientID then
 						tcp.pk = tb_msg[3]
-						local ecdh = require("EllipticCurveCryptography.init")
+						print("PUB2 -> " .. tcp.pk)
+						local ecdh = require("script.EllipticCurveCryptography.init")
 						tcp.finalKey = ecdh.exchange(tcp.pri, tcp.pk).toHex()
+						print("FIK -> " .. tcp.finalKey)
 						print("Connections are established")
 						break
 					end
@@ -61,7 +64,7 @@ tcp.BuildClient = function ()
 					local sender = tb_msg[0]
 					if sender == clientID then
 						tcp.pk = tb_msg[3]
-						local ecdh = require("EllipticCurveCryptography.init")
+						local ecdh = require("script.EllipticCurveCryptography.init")
 						tcp.finalKey = ecdh.exchange(tcp.pri, tcp.pk).toHex()
 						box.sendMessage("$%s %s ECDHR %s", os.getComputerID(), sender, tcp.pub)
 						print("Connections are established")

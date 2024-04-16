@@ -176,7 +176,7 @@ end
 local function encodeModQ(a)
 	local result = encodeInt(a)
 
-	return setmetatable(result, util.byteTableMT)
+	return result -- setmetatable(result, util.byteTableMT)
 end
 
 local function decodeModQ(s)
