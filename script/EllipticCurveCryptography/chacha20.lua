@@ -52,10 +52,15 @@ local function LE_toInt(bs, i)
 		+ blshift((bs[i + 4] or 0), 24)
 end
 
-local function initState(key, nonce, counter)
+local function 
+	initState(key, nonce, counter)
 	local isKey256 = #key == 32
 	local const = isKey256 and sigma or tau
-	local state = Zero
+	local tb16 = {}
+	for i=1, 16 do
+		tb16[i] = 0
+	end
+	local state = tb16
 
 	state[1] = LE_toInt(const, 0)
 	state[2] = LE_toInt(const, 4)
@@ -80,7 +85,11 @@ local function initState(key, nonce, counter)
 end
 
 local function serialize(state)
-	local r, len_r = Zero, 0
+	local tb16 = {}
+	for i=1, 16 do
+		tb16[i] = 0
+	end
+	local r, len_r = tb16, 0
 	for i = 1, 16 do
 		r[len_r + 1] = band(state[i], 0xFF)
 		r[len_r + 2] = band(brshift(state[i], 8), 0xFF)
@@ -102,14 +111,17 @@ local function crypt(data, key, nonce, cntr, round)
 	cntr = tonumber(cntr) or 1
 	round = tonumber(round) or 20
 
-	local out, out_len = Zero, 0
+	local out, out_len = {}, 0
 	local state = initState(key, nonce, cntr)
 	local blockAmt = math.floor(#newData / 64)
 	for i = 0, blockAmt do
 		local ks = serialize(hashBlock(state, round))
 		state[13] = (state[13] + 1) % mod
-
-		local block = Zero
+		local tb64 = {}
+		for j=1, 64 do
+			tb64[j] = 0
+		end
+		local block = tb64
 		for j = 1, 64 do
 			block[j] = newData[(i * 64) + j]
 		end

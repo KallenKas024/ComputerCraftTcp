@@ -63,6 +63,16 @@ end
 
 local function sub(a, b)
 	-- c7 may be negative before reduction
+	if a == nil then
+		for i = 1, 7 do
+			a[i] = 0
+		end
+	end
+	if b == nil then
+		for i = 1, 7 do
+			b[i] = 0
+		end
+	end
 	local c1 = a[1] - b[1]
 	local c2 = a[2] - b[2]
 	local c3 = a[3] - b[3]
@@ -353,8 +363,12 @@ local function encodeInt(a)
 end
 
 local function decodeInt(enc)
-	local a = Zero
-	local encCopy = Zero
+	local a = {}
+	local tb21 = {}
+	for i = 1, 21 do
+		tb21[i] = 0
+	end
+	local encCopy = tb21
 
 	for i = 1, 21 do
 		local byte = enc[i]
@@ -389,7 +403,11 @@ end
 
 -- Represents a 168-bit number as the (2^w)-ary Non-Adjacent Form
 local function NAF(d, w)
-	local t, t_len = Zero, 0
+	local tb168 = {}
+	for i = 1, 168 do
+		tb168[i] = 0
+	end
+	local t, t_len = tb168, 0
 	local newD = { table.unpack(d) }
 
 	for _ = 1, 168 do

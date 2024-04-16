@@ -20,7 +20,7 @@ local modQMT
 
 local q = { 9622359, 6699217, 13940450, 16775734, 16777215, 16777215, 3940351 }
 -- this isn't an optimization, it just shortens the amount of time I have to scroll
-local qMinusTwoBinary = Zero
+local qMinusTwoBinary = {}
 qMinusTwoBinary[2] = 0
 qMinusTwoBinary[4] = 0
 qMinusTwoBinary[6] = 0

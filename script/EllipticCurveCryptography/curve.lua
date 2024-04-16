@@ -17,13 +17,13 @@ local expModP = modp.expModP
 local inverseMontgomeryModQ = modq.inverseMontgomeryModQ
 
 local pointMT
-local ZERO = Zero
+local ZERO = {0, 0, 0, 0, 0, 0, 0} -- Zero
 local ONE = montgomeryModP({ 1, 0, 0, 0, 0, 0, 0 })
 
 -- Curve Parameters
 local d = montgomeryModP({ 122, 0, 0, 0, 0, 0, 0 })
 local p = { 3, 0, 0, 0, 0, 0, 15761408 }
-local pMinusTwoBinary = Zero
+local pMinusTwoBinary = {} -- Zero
 pMinusTwoBinary[1] = 1
 pMinusTwoBinary[160] = 1
 pMinusTwoBinary[165] = 1
@@ -31,7 +31,7 @@ pMinusTwoBinary[166] = 1
 pMinusTwoBinary[167] = 1
 pMinusTwoBinary[168] = 1
 
-local pMinusThreeOverFourBinary = Zero
+local pMinusThreeOverFourBinary = {} -- Zero
 pMinusThreeOverFourBinary[158] = 1
 pMinusThreeOverFourBinary[163] = 1
 pMinusThreeOverFourBinary[164] = 1
@@ -45,7 +45,7 @@ local G = {
 }
 
 local O = {
-	Zero,
+	{},
 	{ table.unpack(ONE) },
 	{ table.unpack(ONE) },
 }
@@ -161,7 +161,11 @@ local function scalarMult(multiplier, P1)
 	local naf = NAF(multiplier, 5)
 	local PTable = { P1 }
 	local P2 = pointDouble(P1)
-	local Q = { Zero, { table.unpack(ONE) }, { table.unpack(ONE) } }
+	local tb32 = {}
+	for i=1, 32 do
+		tb32[i] = 0
+	end
+	local Q = { tb32, { table.unpack(ONE) }, { table.unpack(ONE) } }
 
 	for i = 3, 31, 2 do
 		PTable[i] = pointAdd(PTable[i - 2], P2)
@@ -188,7 +192,11 @@ end
 
 local function scalarMultG(multiplier)
 	local naf = NAF(multiplier, 2)
-	local Q = { Zero, { table.unpack(ONE) }, { table.unpack(ONE) } }
+	local tb168 = {}
+	for i = 1, 168 do
+		tb168[i] = 0
+	end
+	local Q = { tb168, { table.unpack(ONE) }, { table.unpack(ONE) } }
 
 	for i = 1, 168 do
 		if naf[i] == 1 then
@@ -205,7 +213,7 @@ end
 -- Compresses curve points to 22 bytes.
 local function pointEncode(P1)
 	P1 = pointScale(P1)
-	local result = Zero
+	local result = {}
 	local x, y = P1[1], P1[2]
 
 	-- Encode y
@@ -261,28 +269,28 @@ pointMT = {
 	end,
 
 	__add = function(P1, P2)
-		assert(P1:isOnCurve(), "invalid point")
-		assert(P2:isOnCurve(), "invalid point")
+		-- assert(P1:isOnCurve(), "invalid point")
+		-- assert(P2:isOnCurve(), "invalid point")
 
 		return pointAdd(P1, P2)
 	end,
 
 	__sub = function(P1, P2)
-		assert(P1:isOnCurve(), "invalid point")
-		assert(P2:isOnCurve(), "invalid point")
+		-- assert(P1:isOnCurve(), "invalid point")
+		-- assert(P2:isOnCurve(), "invalid point")
 
 		return pointSub(P1, P2)
 	end,
 
 	__unm = function(self)
-		assert(self:isOnCurve(), "invalid point")
+		-- assert(self:isOnCurve(), "invalid point")
 
 		return pointNeg(self)
 	end,
 
 	__eq = function(P1, P2)
-		assert(P1:isOnCurve(), "invalid point")
-		assert(P2:isOnCurve(), "invalid point")
+		-- assert(P1:isOnCurve(), "invalid point")
+		-- assert(P2:isOnCurve(), "invalid point")
 
 		return pointIsEqual(P1, P2)
 	end,

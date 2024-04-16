@@ -8,7 +8,11 @@ local curve = require("script.EllipticCurveCryptography.curve")
 local Zero = require("tcp").ZERO
 
 local function getNonceFromEpoch()
-	local nonce = Zero
+	local tb12 = {}
+	for i=1, 12 do
+		tb12[i] = 0
+	end
+	local nonce = tb12
 	local epoch = os.time()
 	for i = 1, 12 do
 		nonce[i] = epoch % 256
@@ -52,14 +56,10 @@ local function decrypt(data, key)
 	return setmetatable(result, util.byteTableMT)
 end
 
-local function toHex(tb_arr)
-	local pool = "0123456789ABCDEF"
+local function toStr(tb_arr)
 	local res = ""
-	local hexStr = ""
-	for byte in tb_arr do
-		hexStr = string.sub(pool, (byte & 0xF0) >> 4, (byte & 0xF0) >> 4)
-		hexStr = hexStr .. string.sub(pool, (byte & 0x0F), (byte & 0x0F))
-		res = res .. hexStr
+	for i = 1, #tb_arr do
+		res = res .. tb_arr[i]
 	end
 	return res
 end
@@ -79,8 +79,8 @@ local function keypair(seed)
 
 
 	return {
-		toHex(privateKey),
-		toHex(publicKey)
+		privateKey,
+		publicKey
 	}
 end
 

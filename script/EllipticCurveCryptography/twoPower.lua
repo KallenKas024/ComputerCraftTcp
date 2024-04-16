@@ -1,5 +1,5 @@
 local Zero = require("tcp").ZERO
-local twoPower = setmetatable(Zero, {
+local twoPower = setmetatable({}, {
 	__index = function(self, index)
 		local value = 2 ^ index
 		self[index] = value

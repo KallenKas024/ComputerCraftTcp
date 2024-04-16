@@ -1,116 +1,80 @@
 fun = {}
 fun.ZERO = require("script.EllipticCurveCryptography.addZero").ZERO
-fun.Establish = function(clientID)
+fun.Establish = function(clientID, tmpProtocol, tmpTimeOut)
 tcp = {}
 tcp.pub = ""
 tcp.pri = ""
 tcp.pk = ""
 tcp.finalKey = ""
 tcp.clientID = clientID
+tcp.tmpProtocol = tmpProtocol
+tcp.tmpTimeout = tmpTimeOut
 function kp()
 	local ecdh = require("script.EllipticCurveCryptography.init")
-	local rand = require("script.EllipticCurveCryptography.random")
-	local tmp = ecdh.keypair(rand.random())
-	tcp.pri = tmp[1]
-	tcp.pub = tmp[2]
-	print("PRI -> " .. tcp.pri)
-	print("PUB -> " .. tcp.pub)
+	-- local rand = require("script.EllipticCurveCryptography.random")
+	local tmp = ecdh.keypair()
+	tcp.pri = string.format(string.rep("%02x", #tmp[1]), table.unpack(tmp[1]))
+	tcp.pub = string.format(string.rep("%02x", #tmp[2]), table.unpack(tmp[2]))
 end
 
 kp()
 
-function split(str, dl)
-	local result = {}
-	local pat = string.format("([^%s]+)", dl)
-	for part in string.gmatch(str, pat) do
-		table.insert(result, part)
+tcp.BuildServer = function (isprint)
+	rednet.send(tcp.clientID, tcp.pub, tcp.tmpProtocol)
+	if isprint ~= nil then
+		print("SendPubKey")
 	end
-end
-
-tcp.BuildServer = function ()
-	local box = peripheral.find("chatBox")
-	box.sendMessage(string.format("$%s %s ECDHS %s", os.getComputerID(), tcp.clientID, tcp.pub))
-	while true do
-		local event, username, message, uuid, isHidden = os.pullEvent("chat")
-		if string.match(message, os.getComputerID()) then
-			if string.match(message, "ECDHR") then
-				local tb_msg = split(message, " ")
-				if tb_msg ~= nil and tb_msg.len == 3 then
-					local sender = tb_msg[0]
-					if sender == clientID then
-						tcp.pk = tb_msg[3]
-						print("PUB2 -> " .. tcp.pk)
-						local ecdh = require("script.EllipticCurveCryptography.init")
-						tcp.finalKey = ecdh.exchange(tcp.pri, tcp.pk).toHex()
-						print("FIK -> " .. tcp.finalKey)
-						print("Connections are established")
-						break
-					end
-				end
-			end
-		end
-	end
+	_, tcp.pk, _2 = rednet.receive(tcp.tmpProtocol, tcp.tmpTimeOut)
+	local ecdh = require("script.EllipticCurveCryptography.init")
+	tcp.finalKey = ecdh.exchange(tcp.pri, tcp.pk).toHex()
 	return tcp
 end
 
-tcp.BuildClient = function ()
-	local box = peripheral.find("chatBox")
-	while true do
-		local event, username, message, uuid, isHidden = os.pullEvent("chat")
-		if string.match(message, os.getComputerID()) then
-			if string.match(message, "ECDHS") then
-				local tb_msg = split(message, " ")
-				if tb_msg ~= nil and tb_msg.len == 3 then
-					local sender = tb_msg[0]
-					if sender == clientID then
-						tcp.pk = tb_msg[3]
-						local ecdh = require("script.EllipticCurveCryptography.init")
-						tcp.finalKey = ecdh.exchange(tcp.pri, tcp.pk).toHex()
-						box.sendMessage("$%s %s ECDHR %s", os.getComputerID(), sender, tcp.pub)
-						print("Connections are established")
-						break
-					end
-				end
-			end
-		end
+tcp.BuildClient = function (isprint)
+	_, tcp.pk, _2 = rednet.receive(tcp.tmpProtocol, tcp.tmpTimeOut)
+	if isprint ~= nil then
+		print("ReceivePubKey")
 	end
+	local ecdh = require("script.EllipticCurveCryptography.init")
+	tcp.finalKey = ecdh.exchange(tcp.pri, tcp.pk).toHex()
 	return tcp
 end
 
-tcp.SendTcpData = function(msg)
-	local box = peripheral.find("chatBox")
-	if box ~= nil then
-		local ecdh = require("script.EllipticCurveCryptography.init")
-    	local encodingMsg = ecdh.encrypt(msg, tcp.finalKey).toHex()
-		local sign = ecdh.sign(tcp.pri, "Sign0010").toHex()
-		box.sendMessage("$%s %s INFO %s %s", os.getComputerID(), tcp.clientID, encodingMsg, sign)
-	    return true
+tcp.SendTcpData = function(msg, isprint)
+	local ecdh = require("script.EllipticCurveCryptography.init")
+    local encodingMsg = ecdh.encrypt(msg, tcp.finalKey).toHex()
+	local sign = ecdh.sign(tcp.pri, tcp.finalKey).toHex()
+	rednet.send(tcp.clientID, {encodingMsg, sign}, tcp.finalKey)
+	if isprint ~= nil then
+		print("Sended Data")
 	end
-	return false
 end
 
-tcp.ReceiveTcpData = function(func)
-	while true do
-		local event, username, message, uuid, isHidden = os.pullEvent("chat")
-		if string.match(message, os.getComputerID()) then
-			if string.match(message, "INFO") then
-				local tb_msg = split(message, " ")
-				if tb_msg ~= nil and tb_msg.len == 4 then
-					local sender = tb_msg[0]
-					if sender == clientID then
-						local ecdh = require("script.EllipticCurveCryptography.init")
-						local sign = ecdh.verify(tcp.pk, "Sign0010", tb_msg[4])
-						if sign then
-							local msg = ecdh.decrypt(tb_msg[3], tcp.finalKey).toHex()
-							return func(sender, msg)
-						end
-					end
-				end
-			end
-		end
+tcp.ReceiveTcpData = function(timeout, isprint)
+	local _, tb_data, _2 = rednet.receive(tcp.finalKey, timeout)
+	if isprint ~= nil then
+		print("Got Data")
+	end
+	local eMsg = tb_data[1]
+	local signData = tb_data[2]
+	local ecdh = require("script.EllipticCurveCryptography.init")
+	local sign = ecdh.verify(tcp.pk, tcp.finalKey, signData)
+	if sign then
+		local msg = ecdh.decrypt(eMsg, tcp.finalKey).toHex()
+		return msg
+	else
+		return nil
 	end
 end
-	print("Instance is established")
+
+tcp.close = function (side)
+	return rednet.close(side)
+end
+
+tcp.isOpen = function (side)
+	return rednet.isOpen(side)
+end
+
 	return tcp
 end
 

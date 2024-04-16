@@ -11,7 +11,9 @@ local blshift = bit32.lshift
 local function rrotate(n, b)
 	local s = n / twoPower[b]
 	local f = s % 1
-	return (s - f) + f * mod32
+	local res = (s - f) + f * mod32
+	-- os.sleep(0)
+	return res
 end
 
 local function brshift(int, by) -- Thanks bit32 for bad rshift
@@ -109,7 +111,8 @@ local function counter(incr)
 end
 
 local function BE_toInt(bs, i)
-	return blshift((bs[i] or 0), 24) + blshift((bs[i + 1] or 0), 16) + blshift((bs[i + 2] or 0), 8) + (bs[i + 3] or 0)
+	local res = blshift((bs[i] or 0), 24) + blshift((bs[i + 1] or 0), 16) + blshift((bs[i + 2] or 0), 8) + (bs[i + 3] or 0)
+	return res
 end
 
 local function preprocess(data)
@@ -129,7 +132,11 @@ local function preprocess(data)
 	-- if proc == Zero then proc[i] is int
 	-- so it will be a bug
 	for i = 1, blocks do
-		local block = Zero
+		local tb16 = {}
+		for c=1, 16 do
+			tb16[c] = 0
+		end
+		local block = tb16
 		proc[i] = block
 		for j = 1, 16 do
 			block[j] = BE_toInt(data, 1 + ((i - 1) * 64) + ((j - 1) * 4))
@@ -142,19 +149,35 @@ end
 
 local function digestblock(w, C)
 	for j = 17, 64 do
-		local s0 = bxor(bxor(rrotate(w[j - 15], 7), rrotate(w[j - 15], 18)), brshift(w[j - 15], 3))
-		local s1 = bxor(bxor(rrotate(w[j - 2], 17), rrotate(w[j - 2], 19)), brshift(w[j - 2], 10))
+		local _tmp001 = rrotate(w[j - 15], 7)
+		local _tmp002 = rrotate(w[j - 15], 18)
+		local shift = brshift(w[j - 15], 3)
+		local s0 = bxor(_tmp001, _tmp002, shift)
+		local tmp001 = rrotate(w[j - 2], 17)
+		local tmp002 = rrotate(w[j - 2], 19)
+		local tmp004 = bxor(tmp001, tmp002)
+		local tmp005 = brshift(w[j - 2], 10)
+		local s1 = bxor(tmp004, tmp005)
 		w[j] = (w[j - 16] + s0 + w[j - 7] + s1) % mod32
 	end
 
 	local a, b, c, d, e, f, g, h = C[1], C[2], C[3], C[4], C[5], C[6], C[7], C[8]
 	for j = 1, 64 do
-		local S1 = bxor(bxor(rrotate(e, 6), rrotate(e, 11)), rrotate(e, 25))
+		local abab003 = rrotate(e, 11)
+		local abab002 = rrotate(e, 6)
+		local abab001 = rrotate(e, 25)
+		local abab = bxor(abab002, abab003)
+		local S1 = bxor(abab, abab001)
 		local ch = bxor(band(e, f), band(bnot(e), g))
 		local temp1 = (h + S1 + ch + K[j] + w[j]) % mod32
-		local S0 = bxor(bxor(rrotate(a, 2), rrotate(a, 13)), rrotate(a, 22))
+		local cfcf002 = rrotate(a, 13)
+		local cfcf001 = rrotate(a, 2)
+		local zzzz = rrotate(a, 22)
+		local cfcf = bxor(cfcf001, cfcf002)
+		local S0 = bxor(cfcf, zzzz)
 		local maj = bxor(bxor(band(a, b), band(a, c)), band(b, c))
 		local temp2 = (S0 + maj) % mod32
+		os.sleep(0)
 		h, g, f, e, d, c, b, a = g, f, e, (d + temp1) % mod32, c, b, a, (temp1 + temp2) % mod32
 	end
 
@@ -170,7 +193,11 @@ local function digestblock(w, C)
 end
 
 local function toBytes(t, n)
-	local b = Zero
+	local tbn = {}
+	for p=1, n do
+		tbn[p] = 0
+	end
+	local b = tbn
 	for i = 1, n do
 		b[(i - 1) * 4 + 1] = band(brshift(t[i], 24), 0xFF)
 		b[(i - 1) * 4 + 2] = band(brshift(t[i], 16), 0xFF)
@@ -201,9 +228,12 @@ local function hmac(data, key)
 	local blocksize = 64
 
 	actualKey = #actualKey > blocksize and digest(actualKey) or actualKey
-
-	local ipad = Zero
-	local opad = Zero
+	local tbblock = {}
+	for i=1, blocksize do
+		tbblock[i] = 0
+	end
+	local ipad = tbblock
+	local opad = tbblock
 
 	for i = 1, blocksize do
 		ipad[i] = bxor(0x36, actualKey[i] or 0)
@@ -215,7 +245,7 @@ local function hmac(data, key)
 	end
 
 	ipad = digest(ipad)
-	local padded_key = Zero
+	local padded_key = tbblock
 	for i = 1, blocksize do
 		padded_key[i] = opad[i]
 		padded_key[blocksize + i] = ipad[i]
@@ -229,10 +259,10 @@ local function pbkdf2(pass, salt, iter, dklen)
 	local hashlen = 32
 	local actualDklen = dklen or 32
 	local block = 1
-	local out = Zero
+	local out = {}
 
 	while actualDklen > 0 do
-		local ikey = Zero
+		local ikey = {}
 		local isalt = { table.unpack(actualSalt) }
 		local isalt_len = #isalt
 		local clen = actualDklen > hashlen and hashlen or actualDklen
