@@ -17,7 +17,9 @@ local function rrotate(n, b)
 end
 
 local function brshift(int, by) -- Thanks bit32 for bad rshift
-	return math.floor(int / twoPower[by])
+	local res = math.floor(int / twoPower[by])
+	-- os.sleep(0)
+	return res
 end
 
 local H = {
@@ -177,7 +179,7 @@ local function digestblock(w, C)
 		local S0 = bxor(cfcf, zzzz)
 		local maj = bxor(bxor(band(a, b), band(a, c)), band(b, c))
 		local temp2 = (S0 + maj) % mod32
-		os.sleep(0)
+		-- os.sleep(0)
 		h, g, f, e, d, c, b, a = g, f, e, (d + temp1) % mod32, c, b, a, (temp1 + temp2) % mod32
 	end
 

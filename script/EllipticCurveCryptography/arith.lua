@@ -364,11 +364,7 @@ end
 
 local function decodeInt(enc)
 	local a = {}
-	local tb21 = {}
-	for i = 1, 21 do
-		tb21[i] = 0
-	end
-	local encCopy = tb21
+	local encCopy = {}
 
 	for i = 1, 21 do
 		local byte = enc[i]

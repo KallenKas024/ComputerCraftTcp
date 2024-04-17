@@ -56,14 +56,6 @@ local function decrypt(data, key)
 	return setmetatable(result, util.byteTableMT)
 end
 
-local function toStr(tb_arr)
-	local res = ""
-	for i = 1, #tb_arr do
-		res = res .. tb_arr[i]
-	end
-	return res
-end
-
 local function keypair(seed)
 	local x
 	if seed then
@@ -72,7 +64,7 @@ local function keypair(seed)
 		x = modq.randomModQ()
 	end
 
-	local Y = curve.G * x
+	local Y = curve.G[3] * x
 
 	local privateKey = x:encode()
 	local publicKey = Y:encode()
@@ -87,8 +79,7 @@ end
 local function exchange(privateKey, publicKey)
 	local x = modq.decodeModQ(privateKey)
 	local Y = curve.pointDecode(publicKey)
-	local Z = Y * x
-
+	local Z = Y[2] * x
 	local sharedSecret = sha256.digest(Z:encode())
 
 	return sharedSecret

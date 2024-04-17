@@ -31,6 +31,19 @@ util.byteTableMT = {
 
 -- util.byteTableMT.__index = util.byteTableMT
 
+local yieldTime  -- variable to store the time of the last yield
+local function yield()
+    if yieldTime then -- check if it already yielded
+        if os.clock() - yieldTime > 2 then -- if it were more than 2 seconds since the last yield
+            os.queueEvent("someFakeEvent") -- queue the event
+            os.pullEvent("someFakeEvent") -- pull it
+            yieldTime = nil -- reset the counter
+        end
+    else
+        yieldTime = os.clock() -- set the time of the last yield
+    end
+end
+
 function util.stringToByteArray(str)
 	if type(str) ~= "string" then
 		return {}
@@ -38,12 +51,15 @@ function util.stringToByteArray(str)
 
 	local length = #str
 	if length < 7000 then
-		return table.pack(string.byte(str, 1, -1))
+		local buf = table.pack(string.byte(str, 1, -1))
+		return buf
 	end
 
 	local arr = {}
 	for i = 1, length do
+		-- os.sleep(0)
 		arr[i] = string.byte(str, i)
+		yield()
 	end
 
 	return arr

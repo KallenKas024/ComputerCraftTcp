@@ -269,28 +269,28 @@ pointMT = {
 	end,
 
 	__add = function(P1, P2)
-		-- assert(P1:isOnCurve(), "invalid point")
-		-- assert(P2:isOnCurve(), "invalid point")
+		assert(P1:isOnCurve(), "invalid point")
+		assert(P2:isOnCurve(), "invalid point")
 
 		return pointAdd(P1, P2)
 	end,
 
 	__sub = function(P1, P2)
-		-- assert(P1:isOnCurve(), "invalid point")
-		-- assert(P2:isOnCurve(), "invalid point")
+		assert(P1:isOnCurve(), "invalid point")
+		assert(P2:isOnCurve(), "invalid point")
 
 		return pointSub(P1, P2)
 	end,
 
 	__unm = function(self)
-		-- assert(self:isOnCurve(), "invalid point")
+		assert(self:isOnCurve(), "invalid point")
 
 		return pointNeg(self)
 	end,
 
 	__eq = function(P1, P2)
-		-- assert(P1:isOnCurve(), "invalid point")
-		-- assert(P2:isOnCurve(), "invalid point")
+		assert(P1:isOnCurve(), "invalid point")
+		assert(P2:isOnCurve(), "invalid point")
 
 		return pointIsEqual(P1, P2)
 	end,
